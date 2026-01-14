@@ -1,0 +1,30 @@
+# Maven
+/target/
+**/target/
+!**/src/**/target/
+*.jar
+*.war
+*.ear
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db
+
+# Deploy artifacts
+/build/
+
+# Runner files
+.env
+
