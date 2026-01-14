@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="220" viewBox="0 0 760 220" role="img" aria-label="Demo animation placeholder">
+  <style>
+    .bg { fill:#0b1220 }
+    .card { fill:#0f1720; stroke:#1f2937; rx:8; ry:8 }
+    .label { fill:#e6eef8; font-family:Arial, Helvetica, sans-serif; font-size:14px }
+    .cmd { fill:#a8d0ff; font-family:monospace; font-size:13px }
+    .muted { fill:#94a3b8; font-size:12px }
+  </style>
+
+  <rect x="0" y="0" width="760" height="220" class="bg"/>
+
+  <!-- Frame 1: Terminal (curl) -->
+  <g id="frame1" opacity="1">
+    <rect x="24" y="26" width="220" height="170" class="card"/>
+    <text x="38" y="48" class="label">Terminal</text>
+    <text x="38" y="80" class="cmd">$ curl -X POST \</text>
+    <text x="38" y="100" class="cmd">-H "Content-Type: application/json" \</text>
+    <text x="38" y="120" class="cmd">-d '{"to":"user@example.com"}' \</text>
+    <text x="38" y="140" class="cmd">http://localhost:8080/api/notify</text>
+  </g>
+
+  <!-- Frame 2: Kafka topic -->
+  <g id="frame2" opacity="0">
+    <rect x="270" y="26" width="220" height="170" class="card"/>
+    <text x="286" y="48" class="label">Kafka — topic: <tspan style="font-weight:700">notifications</tspan></text>
+    <rect x="290" y="72" width="180" height="36" fill="#12273a" stroke="#334155" rx="6" ry="6"/>
+    <text x="300" y="96" class="muted">{ "to":"user@example.com","message":"Hello" }</text>
+  </g>
+
+  <!-- Frame 3: Consumer UI -->
+  <g id="frame3" opacity="0">
+    <rect x="516" y="26" width="220" height="170" class="card"/>
+    <text x="532" y="48" class="label">Consumer UI</text>
+    <rect x="532" y="72" width="184" height="28" fill="#07182a" rx="4" ry="4"/>
+    <text x="538" y="92" class="muted">Received: Hello</text>
+    <text x="538" y="116" class="muted">to: user@example.com</text>
+    <text x="538" y="140" class="muted">receivedAt: 2026-01-14T...Z</text>
+  </g>
+
+  <!-- Animate opacity across frames to simulate a short demo -->
+  <animate xlink:href="#frame1" attributeName="opacity" dur="3s" values="1;0;0;1" repeatCount="indefinite"/>
+  <animate xlink:href="#frame2" attributeName="opacity" dur="3s" values="0;1;0;0" repeatCount="indefinite"/>
+  <animate xlink:href="#frame3" attributeName="opacity" dur="3s" values="0;0;1;0" repeatCount="indefinite"/>
+
+  <text x="20" y="208" class="muted">Quick demo: curl → Kafka → Consumer UI (replace with an actual GIF/screencast for presentations)</text>
+</svg>
