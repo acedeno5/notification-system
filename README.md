@@ -1,130 +1,127 @@
-# Scalable Event-Driven Notification System  
-A distributed microservices application for handling high-volume notifications (email, SMS, push) using Kafka, Spring Boot, and Docker. Modeled after large-scale architectures used at Meta, Uber, and Amazon.
+# Notification System — Event-driven microservices (Java 21) ✅
+A small, production-like demo showing a Java 21 + Spring Boot event-driven notification system: a REST-based producer publishes JSON messages to a Kafka topic and an email consumer subscribes and exposes a simple UI. This repository demonstrates the upgrade and modernization work needed for multi-module Java projects (dependency alignment, logging, encoding, and reproducible Docker builds).
 
-## 🚀 Features
-- Event-driven, asynchronous communication using **Apache Kafka**
-- Microservices for:
-  - User management  
-  - Notification producer  
-  - Email/SMS/Push consumers  
-- Horizontal scalability for high-volume workloads  
-- REST APIs for event triggering  
-- Centralized DTO + shared utilities  
-- Docker-compose environment (Kafka + Zookeeper + services)
+---
 
-## 🛠️ Tech Stack
-- **Java, Spring Boot**
-- **Apache Kafka, Zookeeper**
-- **Docker & Docker Compose**
-- **H2 / PostgreSQL**
-- **RESTful APIs**
+## Quick highlights
+- **Language:** Java 21, **Framework:** Spring Boot 3.2.x
+- **Messaging:** Apache Kafka (local demo via Docker Compose)
+- **Deployment:** Docker (multi-stage), Docker Compose demo, optional Cloud Run deploy script
+- **CI:** GitHub Actions workflow included (build + test)
 
-## 📁 Architecture
+---
+
+## TL;DR for recruiters
+- Performed a safe upgrade to Java 21 across a multi-module Maven project and resolved real-world issues (missing dependency versions, SLF4J/logging conflicts, packaging for Docker)
+- Added a reproducible demo (producer → Kafka → consumer UI) and CI to showcase the runnable system and maintainability
+
+## Architecture & where to look
 ```
 notification-system/
- ├── user-service/
- ├── notification-producer/
- ├── notification-consumers/
- │     ├── email-consumer/
- │     ├── sms-consumer/
- │     └── push-consumer/
- ├── common/
- └── docker/
+├── pom.xml (root aggregator)
+├── common/                      # shared DTOs & utilities
+├── notification-producer/       # REST service (POST /api/notify)
+├── email-consumer/              # Kafka consumer + UI (GET /consumer/ui)
+├── user-service/                # user management (placeholder)
+└── docker/                      # docker-compose (Zookeeper + Kafka + services)
 ```
 
-## 📡 System Workflow
-1. User-service triggers an event  
-2. Producer publishes messages to Kafka topic  
-3. Consumers pick up notifications  
-4. Email/SMS/Push logic executes asynchronously  
+Key endpoints (local demo):
+- Producer: `POST http://localhost:8080/api/notify` — body: `{"to":"...","message":"..."}`
+- Producer health: `GET http://localhost:8080/api/health`
+- Consumer API: `GET http://localhost:8081/consumer/api/messages`
+- Consumer UI: `GET http://localhost:8081/consumer/ui`
 
-## 🧪 Testing
-- Unit tests for service + controller layers  
-- Integration tests w/ Kafka Test Containers  
+## Tests & CI
+- Run tests locally: `mvn -T1C test`
+- CI: `.github/workflows/ci.yml` performs a full Maven build & test run on push/PR
 
-## ▶️ Running the System
-Use Docker Compose to run a local development stack (Kafka + Zookeeper + `notification-producer`).
+Add this badge to the README (replace `acedeno5/notification-system` if different):
 
-1) Build & run with Docker Compose (recommended):
+```md
+[![CI](https://github.com/acedeno5/notification-system/actions/workflows/ci.yml/badge.svg)](https://github.com/acedeno5/notification-system/actions/workflows/ci.yml)
+```
+
+## Run the demo locally (recommended, free)
+Prerequisites: Docker & Docker Compose.
+
+1) Start the stack (builds images):
 
 ```bash
-# from repo root
+# from repository root
 scripts/start-all.sh
 ```
 
-2) Stop the stack:
+2) Publish a test message:
+
+```bash
+curl -sS -H "Content-Type: application/json" \
+  -d '{"to":"user@example.com","message":"Hello from demo"}' \
+  http://localhost:8080/api/notify
+```
+
+3) View messages in consumer UI:
+
+```bash
+open http://localhost:8081/consumer/ui
+# or
+curl -sS http://localhost:8081/consumer/api/messages | jq
+```
+
+4) Stop the stack:
 
 ```bash
 scripts/stop-all.sh
 ```
 
-3) Validate the producer service:
-
-```bash
-# health check
-curl -sS http://localhost:8080/api/health
-
-# test notify
-curl -sS -H "Content-Type: application/json" -d '{"to":"user@example.com","message":"Hello"}' http://localhost:8080/api/notify
-```
+Notes: The consumer keeps a short in-memory list for demo purposes; production systems should use durable storage and monitoring.
 
 ---
 
-## ☁️ Deploy to Google Cloud (Cloud Run)
-This repo includes a convenience script to build Docker images, push them to Google Container Registry (GCR), and deploy them to Cloud Run.
+## Deploy (Optional) — Cloud Run
+A helper script `scripts/deploy-to-cloud-run.sh` builds images, pushes to GCR, and deploys Cloud Run services. Use with caution — cloud usage may incur cost.
 
-Prerequisites:
-- Google Cloud SDK installed and authenticated (`gcloud auth login`)
-- `gcloud` project set (`gcloud config set project <PROJECT_ID>`)
-- Enable Cloud Run APIs: `gcloud services enable run.googleapis.com artifactregistry.googleapis.com`
+Prerequisites: `gcloud` configured and authenticated.
 
-Quick steps:
-
-```bash
-# make script executable
-chmod +x scripts/deploy-to-cloud-run.sh
-
-# deploy (replace PROJECT_ID and optional region)
-./scripts/deploy-to-cloud-run.sh <PROJECT_ID> us-central1
-```
-
-After deploy, get the service URLs:
-
-```bash
-# get public URLs
-gcloud run services describe notification-producer --region us-central1 --format 'value(status.url)'
-gcloud run services describe email-consumer --region us-central1 --format 'value(status.url)'
-```
-
-Notes:
-- For production, use Artifact Registry instead of GCR and secure your services with IAM or IAP instead of `--allow-unauthenticated`.
-- For Kafka in Cloud, use Confluent Cloud or run Kafka on GKE; you’ll need to configure `spring.kafka.bootstrap-servers` and credentials in `application.properties` or use secrets.
+Important notes for production:
+- Use a managed Kafka service (Confluent Cloud or Kafka on GKE) and secure credentials via secrets or a secret manager
+- Configure monitoring, retries, and dead-letter queues for production reliability
 
 ---
 
-## ✅ CI (GitHub Actions)
-This repository includes a GitHub Actions workflow that runs on push and pull requests to the `main` branch. The workflow builds the project, runs tests, and uploads built JARs as artifacts.
-
-Add a CI badge to your README (replace `OWNER/REPO` with your GitHub repository):
-
-```md
-[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
-```
-
-You can extend the workflow to build Docker images and push them to an image registry if you provide credentials as GitHub Secrets. For now it performs a full Maven build and test run, which is free to run on GitHub Actions for public repositories.
-
----
 
 Notes:
 - Docker Compose builds the service using the `notification-producer/Dockerfile` (multi-stage build).
 - If you prefer to run locally without Docker, build and run the jar as before (JDK 21 required):
 
 ```bash
-export JAVA_HOME=/Users/_.alanc/Library/Java/JavaVirtualMachines/openjdk-21.0.1/Contents/Home
+export JAVA_HOME=/path/to/your/jdk21
 mvn -pl notification-producer -am -DskipTests package
 $JAVA_HOME/bin/java -jar notification-producer/target/notification-producer-0.1.0-SNAPSHOT.jar
 ```
 
+---
+
+## Design notes & trade-offs
+- **Dependency alignment & BOM:** central dependency management prevents runtime class conflicts (e.g., SLF4J/logging)
+- **Multi-stage Docker images:** small, secure images optimized for CI/CD
+- **Demo simplicity:** in-memory consumer store for quick validation; swap for durable storage in production
+
+---
+
+## Next improvements (optional)
+- Add Testcontainers-based integration tests for Kafka in CI
+- Add SpotBugs/Checkstyle in CI for stronger quality gates
+- Add an animated demo GIF to improve recruiter visibility
+
+---
+
+## Contribution & License
+Contributions welcome via PR. Consider adding a `LICENSE` file (MIT recommended).
+
+---
+
+If you want, I can add a short demo GIF and update the PR description to highlight the changes for reviewers.
 
 ## 📈 Scalability Notes
 - Add new consumer microservices without modifying existing code  
